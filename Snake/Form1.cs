@@ -136,13 +136,25 @@ namespace Snake
 
                 // draw food
                 foreach (Food food in Food.Where(x => !x.isEaten))
-                { 
-                    canvas.FillEllipse(Brushes.Red,
-                                        new Rectangle(
-                                            food.X * Settings.Width,
-                                            food.Y * Settings.Height,
-                                            Settings.Width, Settings.Height
-                                            ));
+                {
+                    if (!food.isBonus)
+                    {
+                        canvas.FillEllipse(Brushes.Red,
+                                            new Rectangle(
+                                                food.X * Settings.Width,
+                                                food.Y * Settings.Height,
+                                                Settings.Width, Settings.Height
+                                                ));
+                    }
+                    else
+                    {
+                        canvas.FillEllipse(Brushes.Yellow,
+                                            new Rectangle(
+                                                food.X * Settings.Width,
+                                                food.Y * Settings.Height,
+                                                Settings.Width, Settings.Height
+                                                ));
+                    }
                 }
             }
             else
@@ -179,7 +191,7 @@ namespace Snake
             dspHighScore.ForeColor = Color.Black;
 
             Snake.Clear(); // clear all snake parts
-            Circle head = new Circle { X = 0, Y = 0 }; // create a new head for the snake
+            Circle head = new Circle { X = 1, Y = 1 }; // create a new head for the snake
             Snake.Add(head); // add the gead to the snake array
             lblGameOverMessage.Text = Settings.Score.ToString("00000"); // show the score to the label 2
             
@@ -192,7 +204,7 @@ namespace Snake
             if (resetSnake)
             {
                 Snake.Clear();
-                Circle head = new Circle { X = 10, Y = 5 };
+                Circle head = new Circle { X = 1, Y = 1 };
                 Snake.Add(head);
             }
            
@@ -279,11 +291,12 @@ namespace Snake
             }
         }
 
+
         private void generateWalls(int currentLevel)
         {
-            int maxXpos = pbCanvas.Size.Width / Settings.Width;
+            int maxXpos = (pbCanvas.Size.Width / Settings.Width)-1;
             // create a maximum X position int with half the size of the play area
-            int maxYpos = pbCanvas.Size.Height / Settings.Height;
+            int maxYpos = (pbCanvas.Size.Height / Settings.Height)-1;
             // create a maximum Y position int with half the size of the play area
 
             rnd = new Random();
@@ -291,6 +304,21 @@ namespace Snake
             int priorFood = Walls.Count;                       
 
             Walls = new List<Wall>();
+
+            for (int i = 0; i < maxXpos+2; i++)
+            {
+                Walls.Add(new Wall(i, 0, Color.White));
+                Walls.Add(new Wall(i, maxYpos, Color.White));
+            }
+
+            for (int i = 0; i < maxYpos; i++)
+            {
+                Walls.Add(new Wall(maxXpos+1, i, Color.White));
+                Walls.Add(new Wall(0, i, Color.White));
+            }
+
+
+
             for (int i = 0; i < (2 * currentLevel+1); i++)
             {
                 int posX = 0;
@@ -324,9 +352,9 @@ namespace Snake
 
         private void generateFood(int currentLevel)
         {
-            int maxXpos = pbCanvas.Size.Width / Settings.Width;
+            int maxXpos = (pbCanvas.Size.Width / Settings.Width)-1;
             // create a maximum X position int with half the size of the play area
-            int maxYpos = pbCanvas.Size.Height / Settings.Height;
+            int maxYpos = (pbCanvas.Size.Height / Settings.Height)-1;
             // create a maximum Y position int with half the size of the play area
 
             int totalFood = 5;
@@ -345,12 +373,30 @@ namespace Snake
 
                 do
                 {
-                    posX = rnd.Next(0, maxXpos);
-                    posY = rnd.Next(0, maxYpos);
+                    posX = rnd.Next(2, maxXpos-2);
+                    posY = rnd.Next(2, maxYpos-2);
                 } while (isConflict(posX, posY));
 
-                Food.Add(new Food { X = rnd.Next(0, maxXpos), Y = rnd.Next(0, maxYpos), isEaten = false });
+                if (IsWorthy(posX, posY)) Food.Add(new Food { X = rnd.Next(1, maxXpos - 1), Y = rnd.Next(1, maxYpos - 1), isEaten = false, isBonus = true });
+                else Food.Add(new Food { X = rnd.Next(1, maxXpos - 1), Y = rnd.Next(1, maxYpos - 1), isEaten = false, isBonus = false });
+
             }
+        }
+
+        private bool IsWorthy(int posX, int posY)
+        {
+            bool isTop = false;
+            bool isBottom = false;
+            bool isLeft = false;
+            bool isRight = false;
+
+            if (Walls.Any(x => x.X == posX - 1 && (x.Y == posY))) isLeft = true;
+            if (Walls.Any(x => x.X == posX + 1 && (x.Y == posY))) isRight = true;
+            if (Walls.Any(x => x.X == posX && (x.Y == posY-1))) isTop = true;
+            if (Walls.Any(x => x.X == posX && (x.Y == posY+1))) isBottom = true;
+
+            if ((isLeft || isRight) && (isTop || isBottom)) return true;
+            return false;
         }
 
         private bool isConflict(int X, int Y, int length = 0, bool isHorizontal = true)
@@ -392,6 +438,11 @@ namespace Snake
 
             Snake.Add(body); // add the part to the snakes array
             Settings.Score += Settings.Points; // increase the score for the game
+            if (Food[foodIndex].isBonus)
+            {
+                Settings.Score += Settings.Bonus;
+
+            }
             if (Settings.Score > Settings.HighScore)
             {
                 Settings.HighScore = Settings.Score;

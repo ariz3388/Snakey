@@ -9,5 +9,6 @@ namespace Snake
     public class Food : Circle
     {
         public bool isEaten { get; set; }
+        public bool isBonus { get; set; }
     }
 }

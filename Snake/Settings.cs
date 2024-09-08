@@ -41,6 +41,7 @@ namespace Snake
         public static int Height { get; set; }
         public static int Speed { get; set; }
         public static int Score { get; set; }
+        public static int Bonus { get; set; }
         public static int HighScore { get; set; }
         public static int Points { get; set; }
         public static bool GameOver { get; set; }
@@ -60,6 +61,7 @@ namespace Snake
             Height = 16;
             Speed = 10;
             Score = 0;
+            Bonus = 500;
             SetHighScore();
             Points = 100;
             GameOver = false;
